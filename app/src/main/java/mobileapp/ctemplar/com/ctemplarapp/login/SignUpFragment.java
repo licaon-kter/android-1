@@ -8,6 +8,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.View;
 
+import com.rd.PageIndicatorView;
+
 import java.util.ArrayList;
 
 import butterknife.BindView;
@@ -26,6 +28,9 @@ public class SignUpFragment extends BaseFragment{
 
     @BindView(R.id.fragment_sign_up_view_pager)
     ViewPagerNoScroll viewPager;
+
+    @BindView(R.id.pageIndicatorView)
+    PageIndicatorView indicatorView;
 
     StepRegistrationViewModel stepModel;
 
@@ -62,6 +67,8 @@ public class SignUpFragment extends BaseFragment{
                 handleRegistrationActions(stepRegistrationActions);
             }
         });
+
+        indicatorView.setRadius(4);
     }
 
     @Override
