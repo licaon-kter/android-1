@@ -7,11 +7,16 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.Toast;
+
+import com.daimajia.swipe.SwipeLayout;
 
 import net.kibotu.pgp.Pgp;
 
 import java.util.List;
 
+import butterknife.OnClick;
 import mobileapp.ctemplar.com.ctemplarapp.CTemplarApp;
 import mobileapp.ctemplar.com.ctemplarapp.R;
 import mobileapp.ctemplar.com.ctemplarapp.net.response.Messages.MessagesResult;
@@ -31,7 +36,7 @@ public class InboxMessagesAdapter extends RecyclerView.Adapter<InboxMessageViewH
     @NonNull
     @Override
     public InboxMessageViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_message_view_holder, viewGroup, false);
+        final View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_message_view_holder, viewGroup, false);
 
         return new InboxMessageViewHolder(view);
     }
@@ -80,6 +85,34 @@ public class InboxMessagesAdapter extends RecyclerView.Adapter<InboxMessageViewH
         holder.txtSubject.setText(messagesList.get(position).getSubject());
         // Commented because PGP library requires password that can't be obtained
         //holder.txtContent.setText(decodeContent(messagesList.get(position).getContent(), messagesList.get(position).getHash()));
+
+        holder.swipeItem.getSurfaceView().setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(CTemplarApp.getInstance(), "Surface clicked", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        holder.imgSwipeSpam.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(CTemplarApp.getInstance(), "Spam in progress", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        holder.imgSwipeFolder.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(CTemplarApp.getInstance(), "Move to Folder in Progress", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        holder.imgSwipeTrash.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(CTemplarApp.getInstance(), "Trash in Progress", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     @Override

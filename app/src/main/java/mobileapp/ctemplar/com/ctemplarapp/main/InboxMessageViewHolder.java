@@ -6,6 +6,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.daimajia.swipe.SwipeLayout;
+
 import mobileapp.ctemplar.com.ctemplarapp.R;
 
 public class InboxMessageViewHolder extends RecyclerView.ViewHolder{
@@ -20,6 +22,10 @@ public class InboxMessageViewHolder extends RecyclerView.ViewHolder{
     public ImageView imgProtection;
     public ImageView imgStarred;
     public ImageView imgAttachment;
+    public SwipeLayout swipeItem;
+    public ImageView imgSwipeSpam;
+    public ImageView imgSwipeFolder;
+    public ImageView imgSwipeTrash;
 
     public InboxMessageViewHolder(@NonNull View itemView) {
         super(itemView);
@@ -34,5 +40,12 @@ public class InboxMessageViewHolder extends RecyclerView.ViewHolder{
         imgProtection = itemView.findViewById(R.id.message_holder_protection);
         imgStarred = itemView.findViewById(R.id.message_holder_starred);
         imgAttachment = itemView.findViewById(R.id.message_holder_attachment);
+
+        swipeItem = itemView.findViewById(R.id.message_swipe_item);
+        swipeItem.setShowMode(SwipeLayout.ShowMode.PullOut);
+        swipeItem.addDrag(SwipeLayout.DragEdge.Right, swipeItem.findViewById(R.id.message_swipe_layout));
+        imgSwipeSpam = swipeItem.findViewById(R.id.message_move_to_spam);
+        imgSwipeFolder = swipeItem.findViewById(R.id.message_move_to_folder);
+        imgSwipeTrash = swipeItem.findViewById(R.id.message_move_to_trash);
     }
 }

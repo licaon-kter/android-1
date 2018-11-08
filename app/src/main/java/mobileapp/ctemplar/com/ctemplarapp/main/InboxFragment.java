@@ -82,11 +82,6 @@ public class InboxFragment extends BaseFragment {
             }
         });
 
-//        if(mainModel.getMessagesResponse() == null || mainModel.getMessagesResponse().getValue() == null) {
-//            mainModel.showProgressDialog();
-//            mainModel.getMessages(20, 0, mainModel.getCurrentFolder().getValue());
-//        }
-
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(mLayoutManager);
     }
@@ -118,8 +113,6 @@ public class InboxFragment extends BaseFragment {
                     Toast.makeText(getActivity(), getResources().getString(R.string.error_server), Toast.LENGTH_SHORT).show();
                     break;
                 case RESPONSE_NEXT_MESSAGES:
-                    // adapter = new InboxMessagesAdapter(mainModel.getMessagesResponse().getValue().getMessagesList());
-                    // recyclerView.setAdapter(adapter);
                     break;
             }
         }
