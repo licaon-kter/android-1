@@ -4,12 +4,17 @@ import android.graphics.Typeface;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import net.kibotu.pgp.Pgp;
 
+import org.spongycastle.openpgp.PGPException;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import mobileapp.ctemplar.com.ctemplarapp.CTemplarApp;
@@ -79,7 +84,8 @@ public class InboxMessagesAdapter extends RecyclerView.Adapter<InboxMessageViewH
 
         holder.txtSubject.setText(messagesList.get(position).getSubject());
         // Commented because PGP library requires password that can't be obtained
-        //holder.txtContent.setText(decodeContent(messagesList.get(position).getContent(), messagesList.get(position).getHash()));
+        // encodeMessage(messagesList.get(position).getSubject());
+        holder.txtContent.setText(decodeContent(messagesList.get(position).getContent()));
     }
 
     @Override
@@ -87,16 +93,57 @@ public class InboxMessagesAdapter extends RecyclerView.Adapter<InboxMessageViewH
         return messagesList.size();
     }
 
-    private String decodeContent(String encodedString, String password) {
-        Pgp.setPrivateKey(currentMailbox.getPrivateKey());
-        Pgp.setPublicKey(currentMailbox.getPrivateKey());
-        String result = "";
+//    private void encodeMessage(String message) {
+//        Pgp.setPrivateKey(currentMailbox.getPrivateKey());
+//        Pgp.setPublicKey(currentMailbox.getPublicKey());
+//        String encode = "";
+//        String decode = "";
+//        if(!TextUtils.isEmpty(message)) {
+//            try {
+//                encode = Pgp.encrypt(message);
+//                decode = Pgp.decrypt(encode, "receiver");
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            } catch (PGPException e) {
+//                e.printStackTrace();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        Log.i("ENCODE", encode);
+//        Log.i("DECODE", decode);
+//    }
 
-        try {
-            result = Pgp.decrypt(encodedString, password);
-        } catch (Exception e) {
-            e.printStackTrace();
+    private String decodeContent(String encodedString) {
+
+        Pgp.setPrivateKey(currentMailbox.getPrivateKey());
+        Pgp.setPublicKey(currentMailbox.getPublicKey());
+
+//        try {
+//            Pgp.generateKeyRingGenerator("receiver".toCharArray());
+//        } catch (PGPException e) {
+//            e.printStackTrace();
+//        }
+        String result = "";
+        String encString = encodedString;
+//        String encString = encodedString.replace("Comment: https://openpgpjs.org", "")
+//                .replace("Version: OpenPGP.js v3.0.7", "Version: BCPG v@RELEASE_NAME@")
+//                .trim();
+//        try {
+//            encString = new String(encodedString.getBytes("UTF-8"),"UTF-8");
+//        } catch (UnsupportedEncodingException e) {
+//            e.printStackTrace();
+//        }
+
+        if(!TextUtils.isEmpty(encodedString)) {
+            try {
+                result = Pgp.decrypt(encString, "receiver").toString();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
+        Log.i("ENC_TRIM", encString);
 
         return result;
     }

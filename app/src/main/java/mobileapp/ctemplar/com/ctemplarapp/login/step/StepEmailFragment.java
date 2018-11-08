@@ -94,11 +94,14 @@ public class StepEmailFragment extends BaseFragment {
 
         handleErrorEmail(editEmail.getText().toString());
 
-        if(EditTextUtils.isEmailValid(editEmail.getText().toString())) {
+        if(editEmail.getText().toString().length() > 0 && !EditTextUtils.isEmailValid(editEmail.getText().toString())) {
+            return;
+        } else {
             loginActivityModel.showProgressDialog();
             viewModel.setRecoveryEmail(editEmail.getText().toString());
             viewModel.signUp();
         }
+
     }
 
     public void setListeners() {
@@ -133,12 +136,7 @@ public class StepEmailFragment extends BaseFragment {
     }
 
     private void handleErrorEmail(String email) {
-        if(TextUtils.isEmpty(email)) {
-            editEmailLayout.setError(getResources().getString(R.string.error_empty_email));
-            return;
-        }
-
-        if(!EditTextUtils.isEmailValid(email)) {
+        if(email.length() > 0 && !EditTextUtils.isEmailValid(email)) {
             editEmailLayout.setError(getResources().getString(R.string.error_invalid_email));
             return;
         }

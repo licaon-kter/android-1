@@ -26,7 +26,7 @@
         app:piv_selectedColor="@color/colorOrangeLight"
         app:piv_unselectedColor="@color/colorOrangeLight20"
         app:piv_viewPager="@id/fragment_sign_up_view_pager"
-        attrs:piv_padding="12dp"
+        attrs:piv_padding="8dp"
         attrs:piv_radius="4dp" />
 
     <ImageView

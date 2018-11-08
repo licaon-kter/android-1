@@ -53,6 +53,7 @@
             android:fontFamily="@font/lato_regular"
             android:hint="@string/title_username"
             android:inputType="textEmailAddress"
+            android:drawableRight="@drawable/ic_ctemplar_username_black"
             android:letterSpacing="0.05"
             android:textColor="@color/colorDarkBlue2"
             android:textSize="16sp"
