@@ -4,12 +4,18 @@ import android.graphics.Typeface;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import net.kibotu.pgp.Pgp;
 
+import org.spongycastle.openpgp.PGPException;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import mobileapp.ctemplar.com.ctemplarapp.CTemplarApp;
@@ -17,6 +23,7 @@ import mobileapp.ctemplar.com.ctemplarapp.R;
 import mobileapp.ctemplar.com.ctemplarapp.net.response.Messages.MessagesResult;
 import mobileapp.ctemplar.com.ctemplarapp.repository.entity.MailboxEntity;
 import mobileapp.ctemplar.com.ctemplarapp.utils.AppUtils;
+import mobileapp.ctemplar.com.ctemplarapp.utils.EncodeUtils;
 
 public class InboxMessagesAdapter extends RecyclerView.Adapter<InboxMessageViewHolder> {
 
@@ -78,8 +85,10 @@ public class InboxMessagesAdapter extends RecyclerView.Adapter<InboxMessageViewH
         }
 
         holder.txtSubject.setText(messagesList.get(position).getSubject());
-        // Commented because PGP library requires password that can't be obtained
-        //holder.txtContent.setText(decodeContent(messagesList.get(position).getContent(), messagesList.get(position).getHash()));
+        // Commented because PGP library can't decode encoded message from server
+        // PGPTest(messagesList.get(position).getSubject());
+        // holder.txtContent.setText(EncodeUtils.decodeMessage(messagesList.get(position).getContent(),
+        //         currentMailbox.getPublicKey(), currentMailbox.getPrivateKey()));
     }
 
     @Override
@@ -87,17 +96,24 @@ public class InboxMessagesAdapter extends RecyclerView.Adapter<InboxMessageViewH
         return messagesList.size();
     }
 
-    private String decodeContent(String encodedString, String password) {
+    private void PGPTest(String string) {
         Pgp.setPrivateKey(currentMailbox.getPrivateKey());
-        Pgp.setPublicKey(currentMailbox.getPrivateKey());
-        String result = "";
+        Pgp.setPublicKey(currentMailbox.getPublicKey());
 
+        String encrypted = "";
+        String decrypted = "";
         try {
-            result = Pgp.decrypt(encodedString, password);
+            encrypted = Pgp.encrypt(string);
+            decrypted = Pgp.decrypt(encrypted, CTemplarApp.getUserStore().getPassword());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (PGPException e) {
+            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return result;
+        Log.i("ENCRYPTED", encrypted);
+        Log.i("DECRYPTED", decrypted);
     }
 }

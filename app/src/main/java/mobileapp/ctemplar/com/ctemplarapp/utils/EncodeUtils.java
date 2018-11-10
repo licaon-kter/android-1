@@ -14,6 +14,7 @@ import java.util.concurrent.Callable;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import mobileapp.ctemplar.com.ctemplarapp.CTemplarApp;
 import mobileapp.ctemplar.com.ctemplarapp.net.entity.PGPKeyEntity;
 
 public class EncodeUtils {
@@ -64,8 +65,20 @@ public class EncodeUtils {
     }
 
     public static String decodeMessage(String encodedMessage, String publicKey, String privateKey) {
-        if(!TextUtils.isEmpty(encodedMessage)) {
+        Pgp.setPrivateKey(privateKey);
+        Pgp.setPublicKey(publicKey);
 
+        if(!TextUtils.isEmpty(encodedMessage)) {
+            String encString = encodedMessage;
+            String result = "";
+
+            try {
+                result = Pgp.decrypt(encString, CTemplarApp.getUserStore().getPassword());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return result;
         }
 
         return "";

@@ -70,6 +70,19 @@ public class UserStoreImpl implements UserStore{
     }
 
     @Override
+    public void saveCredentials(String username, String pass) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(KEY_USERNAME, username);
+        editor.putString(KEY_PASSWORD, pass);
+        editor.commit();
+    }
+
+    @Override
+    public String getPassword() {
+        return preferences.getString(KEY_PASSWORD, "");
+    }
+
+    @Override
     public void clearToken() {
         SharedPreferences.Editor editor = preferences.edit();
         editor.remove(KEY_USER_TOKEN);

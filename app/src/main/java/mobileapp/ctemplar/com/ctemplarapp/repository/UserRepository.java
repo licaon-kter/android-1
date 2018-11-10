@@ -62,6 +62,10 @@ public class UserRepository {
         userStore.saveToken(token);
     }
 
+    public void saveCredentials(String username, String pass) {
+        userStore.saveCredentials(username, pass);
+    }
+
     public void saveMailboxes(List<MailboxesResult> mailboxes) {
         if(mailboxes != null && mailboxes.size()>0) {
             for(int i = 0; i < mailboxes.size(); i++) {

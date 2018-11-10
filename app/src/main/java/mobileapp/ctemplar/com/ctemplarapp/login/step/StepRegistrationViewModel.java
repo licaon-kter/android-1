@@ -113,6 +113,7 @@ public class StepRegistrationViewModel extends ViewModel {
             @Override
             public void onNext(SignUpResponse signUpResponse) {
                 userRepository.saveUserToken(signUpResponse.getToken());
+                userRepository.saveCredentials(signUpRequest.getUsername(), signUpRequest.getPassword());
                 responseStatus.postValue(ResponseStatus.RESPONSE_NEXT_STEP_EMAIL);
             }
 

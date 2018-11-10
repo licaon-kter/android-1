@@ -61,7 +61,7 @@ public class LoginActivityViewModel extends ViewModel {
         return responseStatus;
     }
 
-    public void signIn(String username, String password) {
+    public void signIn(final String username, final String password) {
         userRepository.signIn(new SignInRequest(username, EncodeUtils.encodePassword(username, password)))
                 .subscribe(new Observer<SignInResponse>() {
 
@@ -96,6 +96,7 @@ public class LoginActivityViewModel extends ViewModel {
                     public void onNext(SignInResponse signInResponse) {
                         responseStatus.postValue(ResponseStatus.RESPONSE_NEXT);
                         userRepository.saveUserToken(signInResponse.getToken());
+                        userRepository.saveCredentials(username, password);
                     }
                 });
     }
@@ -170,6 +171,7 @@ public class LoginActivityViewModel extends ViewModel {
             @Override
             public void onNext(RecoverPasswordResponse recoverPasswordResponse) {
                 userRepository.saveUserToken(recoverPasswordResponse.getToken());
+                userRepository.saveCredentials(recoverPasswordRequest.getUsername(), recoverPasswordRequest.getPassword());
                 responseStatus.postValue(ResponseStatus.RESPONSE_NEXT_NEW_PASSWORD);
             }
 

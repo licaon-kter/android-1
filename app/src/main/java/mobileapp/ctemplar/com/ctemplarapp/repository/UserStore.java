@@ -8,6 +8,8 @@ public interface UserStore {
     public void saveToken(String token);
     public void saveUserPref(String username, String pass, String passHashed, String privateKey, String publicKey);
     public UserEntity getUser();
+    public void saveCredentials(String username, String pass);
+    public String getPassword();
     public void clearToken();
     public void logout();
 }
