@@ -17,6 +17,7 @@ import mobileapp.ctemplar.com.ctemplarapp.R;
 import mobileapp.ctemplar.com.ctemplarapp.net.response.Messages.MessagesResult;
 import mobileapp.ctemplar.com.ctemplarapp.repository.entity.MailboxEntity;
 import mobileapp.ctemplar.com.ctemplarapp.utils.AppUtils;
+import mobileapp.ctemplar.com.ctemplarapp.utils.DateUtils;
 
 public class InboxMessagesAdapter extends RecyclerView.Adapter<InboxMessageViewHolder> {
 
@@ -64,8 +65,8 @@ public class InboxMessagesAdapter extends RecyclerView.Adapter<InboxMessageViewH
         }
 
         // format creation date
-        if(TextUtils.isEmpty(messagesList.get(position).getCreatedAt())) {
-            holder.txtDate.setText(AppUtils.formatDate(messagesList.get(position).getCreatedAt()));
+        if(!TextUtils.isEmpty(messagesList.get(position).getCreatedAt())) {
+            holder.txtDate.setText(DateUtils.formatMessageDate(messagesList.get(position).getCreatedAt()));
         }
 
         holder.imgStarred.setEnabled(messagesList.get(position).isStarred());
