@@ -1,15 +1,14 @@
 package mobileapp.ctemplar.com.ctemplarapp.mailboxes;
 
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.ViewModel;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
 import android.content.Context;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableSource;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
@@ -184,14 +183,11 @@ public class MailboxesViewModel extends ViewModel {
         EncodeUtils.generateAdditionalMailbox(mailboxEmail, userPassword)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .flatMap(new Function<PGPKeyEntity, Observable<Response<MailboxesResult>>>() {
-                    @Override
-                    public Observable<Response<MailboxesResult>> apply(PGPKeyEntity pgpKeyEntity) {
-                        createMailboxRequest.setPrivateKey(pgpKeyEntity.getPrivateKey());
-                        createMailboxRequest.setPublicKey(pgpKeyEntity.getPublicKey());
-                        createMailboxRequest.setFingerprint(pgpKeyEntity.getFingerprint());
-                        return userRepository.createMailbox(createMailboxRequest);
-                    }
+                .flatMap((Function<PGPKeyEntity, Observable<Response<MailboxesResult>>>) pgpKeyEntity -> {
+                    createMailboxRequest.setPrivateKey(pgpKeyEntity.getPrivateKey());
+                    createMailboxRequest.setPublicKey(pgpKeyEntity.getPublicKey());
+                    createMailboxRequest.setFingerprint(pgpKeyEntity.getFingerprint());
+                    return userRepository.createMailbox(createMailboxRequest);
                 }).subscribe(new Observer<Response<MailboxesResult>>() {
             @Override
             public void onSubscribe(Disposable d) {

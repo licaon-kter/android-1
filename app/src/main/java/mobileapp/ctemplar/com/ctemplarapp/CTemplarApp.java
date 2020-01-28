@@ -1,10 +1,14 @@
 package mobileapp.ctemplar.com.ctemplarapp;
 
 import android.app.Application;
-import android.arch.persistence.room.Room;
-import android.support.multidex.MultiDexApplication;
+import androidx.room.Room;
+import androidx.multidex.MultiDexApplication;
 
 import com.crashlytics.android.Crashlytics;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
+import java.security.Security;
 
 import io.fabric.sdk.android.Fabric;
 import mobileapp.ctemplar.com.ctemplarapp.net.RestClient;
@@ -35,14 +39,15 @@ public class CTemplarApp extends MultiDexApplication {
     @Override
     public void onCreate() {
         super.onCreate();
+        instance = this;
         Timber.plant(new Timber.DebugTree());
+        Security.addProvider(new BouncyCastleProvider());
+        installProviders(this);
         final Fabric fabric = new Fabric.Builder(this)
                 .kits(new Crashlytics())
                 .debuggable(true)
                 .build();
         Fabric.with(fabric);
-        instance = this;
-        installProviders(this);
     }
 
     public static CTemplarApp getInstance() {

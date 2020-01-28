@@ -1,7 +1,7 @@
 package mobileapp.ctemplar.com.ctemplarapp.message;
 
-import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.ViewModel;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,8 +44,8 @@ public class ViewMessagesViewModel extends ViewModel {
         manageFoldersRepository = CTemplarApp.getManageFoldersRepository();
     }
 
-    List<MailboxEntity> getMailboxes() {
-        return CTemplarApp.getAppDatabase().mailboxDao().getAll();
+    MailboxEntity getMailboxById(long mailboxId) {
+        return CTemplarApp.getAppDatabase().mailboxDao().getById(mailboxId);
     }
 
     String getUserPassword() {
@@ -100,7 +100,10 @@ public class ViewMessagesViewModel extends ViewModel {
                             return;
                         }
                         MessagesResult parentMessageResult = messagesResults.get(0);
-                        MessageEntity parentEntity = MessageProvider.fromMessagesResultToEntity(parentMessageResult);
+                        MessageEntity parentLocalMessage = messagesRepository.getLocalMessage(id);
+                        MessageEntity parentEntity = MessageProvider.fromMessagesResultToEntity(
+                                parentMessageResult, parentLocalMessage.getRequestFolder()
+                        );
                         MessageProvider parentMessage = MessageProvider.fromMessageEntity(parentEntity);
 
                         MessagesResult[] childrenResult = parentMessageResult.getChildren();
@@ -129,8 +132,8 @@ public class ViewMessagesViewModel extends ViewModel {
                 });
     }
 
-    public void markMessageIsStarred(final long id, final boolean starred) {
-        userRepository.markMessageIsStarred(id, starred)
+    public void markMessageIsStarred(long id, final boolean isStarred) {
+        userRepository.markMessageIsStarred(id, isStarred)
                 .subscribe(new Observer<Response<Void>>() {
                     @Override
                     public void onSubscribe(Disposable d) {
@@ -141,8 +144,8 @@ public class ViewMessagesViewModel extends ViewModel {
                     public void onNext(Response<Void> messageResponse) {
                         int resultCode = messageResponse.code();
                         if (resultCode == 204) {
-                            CTemplarApp.getAppDatabase().messageDao().updateIsStarred(id, starred);
-                            starredResponse.postValue(starred);
+                            messagesRepository.markMessageIsStarred(id, isStarred);
+                            starredResponse.postValue(isStarred);
                         } else {
                             Timber.e("Update starred response is not success: code = %s", resultCode);
                         }
@@ -160,7 +163,7 @@ public class ViewMessagesViewModel extends ViewModel {
                 });
     }
 
-    public void markMessageAsRead(final long id, final boolean isRead) {
+    public void markMessageAsRead(long id, boolean isRead) {
         MarkMessageAsReadRequest request = new MarkMessageAsReadRequest(isRead);
         userRepository.markMessageAsRead(id, request)
                 .subscribe(new Observer<Response<Void>>() {
@@ -173,7 +176,7 @@ public class ViewMessagesViewModel extends ViewModel {
                     public void onNext(Response<Void> messageResponse) {
                         int resultCode = messageResponse.code();
                         if (resultCode == 204) {
-                            CTemplarApp.getAppDatabase().messageDao().updateIsRead(id, isRead);
+                            messagesRepository.markMessageAsRead(id, isRead);
                         } else {
                             Timber.e("Update isRead response is not success: code = %s", resultCode);
                         }
@@ -216,7 +219,7 @@ public class ViewMessagesViewModel extends ViewModel {
                 });
     }
 
-    public void moveToFolder(long messageId, String folder) {
+    public void moveToFolder(final long messageId, final String folder) {
         userRepository.toFolder(messageId, folder)
                 .subscribe(new Observer<Response<Void>>() {
                     @Override
@@ -226,6 +229,7 @@ public class ViewMessagesViewModel extends ViewModel {
 
                     @Override
                     public void onNext(Response<Void> voidResponse) {
+                        messagesRepository.updateMessageFolderName(messageId, folder);
                         moveToFolderStatus.postValue(ResponseStatus.RESPONSE_COMPLETE);
                     }
 

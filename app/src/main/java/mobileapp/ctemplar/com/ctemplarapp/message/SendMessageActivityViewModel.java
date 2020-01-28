@@ -1,10 +1,10 @@
 package mobileapp.ctemplar.com.ctemplarapp.message;
 
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.ViewModel;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -19,8 +19,6 @@ import java.util.List;
 
 import io.reactivex.Observer;
 import io.reactivex.Single;
-import io.reactivex.SingleEmitter;
-import io.reactivex.SingleOnSubscribe;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import mobileapp.ctemplar.com.ctemplarapp.CTemplarApp;
@@ -34,6 +32,7 @@ import mobileapp.ctemplar.com.ctemplarapp.net.response.Messages.MessageAttachmen
 import mobileapp.ctemplar.com.ctemplarapp.net.response.Messages.MessagesResult;
 import mobileapp.ctemplar.com.ctemplarapp.net.response.Myself.MyselfResponse;
 import mobileapp.ctemplar.com.ctemplarapp.repository.ContactsRepository;
+import mobileapp.ctemplar.com.ctemplarapp.repository.MailboxDao;
 import mobileapp.ctemplar.com.ctemplarapp.repository.MessagesRepository;
 import mobileapp.ctemplar.com.ctemplarapp.repository.UserRepository;
 import mobileapp.ctemplar.com.ctemplarapp.repository.entity.Contact;
@@ -41,9 +40,9 @@ import mobileapp.ctemplar.com.ctemplarapp.repository.entity.ContactEntity;
 import mobileapp.ctemplar.com.ctemplarapp.repository.entity.MailboxEntity;
 import mobileapp.ctemplar.com.ctemplarapp.repository.entity.MessageEntity;
 import mobileapp.ctemplar.com.ctemplarapp.repository.provider.AttachmentProvider;
+import mobileapp.ctemplar.com.ctemplarapp.security.PGPManager;
 import mobileapp.ctemplar.com.ctemplarapp.utils.AppUtils;
 import mobileapp.ctemplar.com.ctemplarapp.utils.FileUtils;
-import mobileapp.ctemplar.com.ctemplarapp.utils.PGPManager;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
@@ -54,9 +53,10 @@ import timber.log.Timber;
 
 public class SendMessageActivityViewModel extends ViewModel {
 
-    private UserRepository userRepository;
     private MessagesRepository messagesRepository;
+    private UserRepository userRepository;
     private ContactsRepository contactsRepository;
+    private MailboxDao mailboxDao;
 
     private MutableLiveData<ResponseStatus> responseStatus = new MutableLiveData<>();
     private MutableLiveData<ResponseStatus> uploadAttachmentStatus = new MutableLiveData<>();
@@ -74,17 +74,18 @@ public class SendMessageActivityViewModel extends ViewModel {
     private MutableLiveData<MessageEntity> openMessageResponse = new MutableLiveData<>();
 
     public SendMessageActivityViewModel() {
-        userRepository = CTemplarApp.getUserRepository();
         messagesRepository = MessagesRepository.getInstance();
+        userRepository = CTemplarApp.getUserRepository();
         contactsRepository = CTemplarApp.getContactsRepository();
+        mailboxDao = CTemplarApp.getAppDatabase().mailboxDao();
     }
 
     public List<MailboxEntity> getMailboxes() {
-        return CTemplarApp.getAppDatabase().mailboxDao().getAll();
+        return mailboxDao.getAll();
     }
 
     public MailboxEntity getMailboxById(long id) {
-        return CTemplarApp.getAppDatabase().mailboxDao().getById(id);
+        return mailboxDao.getById(id);
     }
 
     public String getUserPassword() {
@@ -188,11 +189,10 @@ public class SendMessageActivityViewModel extends ViewModel {
         boolean isSubjectEncrypted = request.isSubjectEncrypted();
 
         if (!receiverPublicKeys.isEmpty()) {
-            PGPManager pgpManager = new PGPManager();
             String[] publicKeys = receiverPublicKeys.toArray(new String[0]);
-            content = pgpManager.encryptMessage(content, publicKeys);
+            content = PGPManager.encrypt(content, publicKeys);
             if (isSubjectEncrypted && !subject.isEmpty()) {
-                subject = pgpManager.encryptMessage(subject, publicKeys);
+                subject = PGPManager.encrypt(subject, publicKeys);
             }
             request.setContent(content);
             request.setSubject(subject);
@@ -320,17 +320,14 @@ public class SendMessageActivityViewModel extends ViewModel {
 
                     @Override
                     public void onNext(final ContactsResponse response) {
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                ContactData[] contacts = response.getResults();
-                                ContactData[] decryptedContacts = Contact.decryptContactData(contacts);
+                        new Thread(() -> {
+                            ContactData[] contacts = response.getResults();
+                            ContactData[] decryptedContacts = Contact.decryptContactData(contacts);
 
-                                contactsRepository.saveContacts(decryptedContacts);
-                                List<Contact> contactList = Contact.fromResponseResults(decryptedContacts);
+                            contactsRepository.saveContacts(decryptedContacts);
+                            List<Contact> contactList1 = Contact.fromResponseResults(decryptedContacts);
 
-                                contactsResponse.postValue(contactList);
-                            }
+                            contactsResponse.postValue(contactList1);
                         }).start();
                     }
 
@@ -495,20 +492,17 @@ public class SendMessageActivityViewModel extends ViewModel {
             @NonNull final List<AttachmentProvider> forwardedAttachments,
             final long messageId
     ) {
-        Single.create(new SingleOnSubscribe<Object>() {
-            @Override
-            public void subscribe(SingleEmitter<Object> emitter) throws Exception {
-                for (AttachmentProvider forwardedAttachment : forwardedAttachments) {
-                    MessageAttachment attachment = remakeAttachment(forwardedAttachment, messageId);
-                    if (attachment != null) {
-                        uploadAttachmentResponse.postValue(attachment);
-                    } else {
-                        Timber.e("grabForwardedAttachments uploaded attachment is null");
-                    }
+        Single.create(emitter -> {
+            for (AttachmentProvider forwardedAttachment : forwardedAttachments) {
+                MessageAttachment attachment = remakeAttachment(forwardedAttachment, messageId);
+                if (attachment != null) {
+                    uploadAttachmentResponse.postValue(attachment);
+                } else {
+                    Timber.e("grabForwardedAttachments uploaded attachment is null");
                 }
-                grabAttachmentStatus.postValue(true);
-                Timber.i("Grabbed all forwarded attachments");
             }
+            grabAttachmentStatus.postValue(true);
+            Timber.i("Grabbed all forwarded attachments");
         })
                 .subscribeOn(Schedulers.io())
                 .subscribe();

@@ -1,7 +1,5 @@
 package mobileapp.ctemplar.com.ctemplarapp.repository.provider;
 
-import com.didisoft.pgp.exceptions.NonPGPDataException;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,12 +11,11 @@ import mobileapp.ctemplar.com.ctemplarapp.net.response.Messages.MessagesResult;
 import mobileapp.ctemplar.com.ctemplarapp.net.response.Messages.UserDisplay;
 import mobileapp.ctemplar.com.ctemplarapp.repository.MailboxDao;
 import mobileapp.ctemplar.com.ctemplarapp.repository.UserStore;
-import mobileapp.ctemplar.com.ctemplarapp.repository.constant.MainFolderNames;
 import mobileapp.ctemplar.com.ctemplarapp.repository.entity.AttachmentEntity;
 import mobileapp.ctemplar.com.ctemplarapp.repository.entity.MailboxEntity;
 import mobileapp.ctemplar.com.ctemplarapp.repository.entity.MessageEntity;
 import mobileapp.ctemplar.com.ctemplarapp.repository.entity.UserDisplayEntity;
-import mobileapp.ctemplar.com.ctemplarapp.utils.PGPManager;
+import mobileapp.ctemplar.com.ctemplarapp.security.PGPManager;
 import timber.log.Timber;
 
 public class MessageProvider {
@@ -349,48 +346,28 @@ public class MessageProvider {
     }
 //    private MessagesResult[] children;
 
-    private static UserStore userStore = CTemplarApp.getUserStore();
-    private static MailboxDao mailboxDao = CTemplarApp.getAppDatabase().mailboxDao();
-
-    public static MailboxEntity getDefaultMailbox() {
-        if (mailboxDao.getDefault() != null) {
-            return mailboxDao.getDefault();
-        } else {
-            if (!mailboxDao.getAll().isEmpty()) {
-                return mailboxDao.getAll().get(0);
-            } else {
-                Timber.e("Mailbox not found");
-            }
-        }
-        return null;
-    }
-
-    private static String decryptContent(String content, long mailboxId) {
+    private static String decryptContent(String content, long mailboxId, boolean imgDisabled) {
         if (content == null) {
             return "";
         }
-
+        UserStore userStore = CTemplarApp.getUserStore();
+        MailboxDao mailboxDao = CTemplarApp.getAppDatabase().mailboxDao();
         MailboxEntity mailboxEntity = mailboxDao.getById(mailboxId);
         String password = userStore.getUserPassword();
-
-        PGPManager pgpManager = new PGPManager();
         if (mailboxEntity != null) {
             String privateKey = mailboxEntity.getPrivateKey();
-            try {
-                content = pgpManager.decryptMessage(content, privateKey, password);
-            } catch (NonPGPDataException e) {
-                //
-            } catch (Exception e) {
-                Timber.w(e);
-            }
+            content = PGPManager.decrypt(content, privateKey, password);
         }
+        return imgDisabled ? content.replaceAll("<img.+?>", "") : content;
+    }
 
-        return content.replaceAll("<img.+?>", "");
+    private static String decryptContent(String content, long mailboxId) {
+        return decryptContent(content, mailboxId, false);
     }
 
     private static String decryptSubject(String subject, long mailboxId, boolean isEncrypted) {
         if (isEncrypted) {
-            return decryptContent(subject, mailboxId);
+            return decryptContent(subject, mailboxId, true);
         } else {
             return subject;
         }
@@ -648,10 +625,6 @@ public class MessageProvider {
             userDisplayEntityList.add(convertUserDisplayFromResponseToEntity(userDisplay));
         }
         return userDisplayEntityList;
-    }
-
-    public static MessageEntity fromMessagesResultToEntity(MessagesResult message) {
-        return fromMessagesResultToEntity(message, "");
     }
 
     public static MessageEntity fromMessagesResultToEntity(MessagesResult message, String requestFolder) {

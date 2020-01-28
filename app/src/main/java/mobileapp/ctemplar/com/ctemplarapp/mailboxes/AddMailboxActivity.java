@@ -1,22 +1,18 @@
 package mobileapp.ctemplar.com.ctemplarapp.mailboxes;
 
 import android.app.ProgressDialog;
-import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProviders;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.design.widget.TextInputEditText;
-import android.support.v7.app.ActionBar;
-import android.support.v7.widget.Toolbar;
+import com.google.android.material.textfield.TextInputEditText;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import android.widget.Toast;
@@ -29,8 +25,6 @@ import butterknife.OnClick;
 import mobileapp.ctemplar.com.ctemplarapp.BaseActivity;
 import mobileapp.ctemplar.com.ctemplarapp.R;
 import mobileapp.ctemplar.com.ctemplarapp.net.ResponseStatus;
-import mobileapp.ctemplar.com.ctemplarapp.net.response.CheckUsernameResponse;
-import mobileapp.ctemplar.com.ctemplarapp.net.response.Domains.DomainsResponse;
 import mobileapp.ctemplar.com.ctemplarapp.net.response.Domains.DomainsResults;
 import mobileapp.ctemplar.com.ctemplarapp.utils.EditTextUtils;
 
@@ -75,44 +69,35 @@ public class AddMailboxActivity extends BaseActivity {
         setDomains(domainsList);
 
         mailboxesModel.getDomains();
-        mailboxesModel.getDomainsResponse().observe(this, new Observer<DomainsResponse>() {
-            @Override
-            public void onChanged(@Nullable DomainsResponse domainsResponse) {
-                if (domainsResponse != null) {
-                    List<DomainsResults> domainsResultList = domainsResponse.getDomainsResultsList();
-                    for (DomainsResults domain : domainsResultList) {
-                        domainsList.add(domain.getDomain());
-                    }
-                    setDomains(domainsList);
+        mailboxesModel.getDomainsResponse().observe(this, domainsResponse -> {
+            if (domainsResponse != null) {
+                List<DomainsResults> domainsResultList = domainsResponse.getDomainsResultsList();
+                for (DomainsResults domain : domainsResultList) {
+                    domainsList.add(domain.getDomain());
                 }
+                setDomains(domainsList);
             }
         });
         createMailboxButton.setEnabled(false);
-        mailboxesModel.getCheckUsernameResponse().observe(this, new Observer<CheckUsernameResponse>() {
-            @Override
-            public void onChanged(@Nullable CheckUsernameResponse checkUsernameResponse) {
-                if (checkUsernameResponse != null) {
-                    boolean isExists = checkUsernameResponse.isExists();
-                    createMailboxButton.setEnabled(!isExists);
-                    if (isExists) {
-                        emailEditText.setError(getString(R.string.mailbox_alias_exists));
-                    }
+        mailboxesModel.getCheckUsernameResponse().observe(this, checkUsernameResponse -> {
+            if (checkUsernameResponse != null) {
+                boolean isExists = checkUsernameResponse.isExists();
+                createMailboxButton.setEnabled(!isExists);
+                if (isExists) {
+                    emailEditText.setError(getString(R.string.mailbox_alias_exists));
                 }
             }
         });
-        mailboxesModel.createMailboxResponseStatus().observe(this, new Observer<ResponseStatus>() {
-            @Override
-            public void onChanged(@Nullable ResponseStatus responseStatus) {
-                if (responseStatus == ResponseStatus.RESPONSE_COMPLETE) {
-                    Toast.makeText(getApplicationContext(), getString(R.string.mailbox_alias_creation_success), Toast.LENGTH_LONG).show();
-                } else if (responseStatus == ResponseStatus.RESPONSE_ERROR_PAID) {
-                    Toast.makeText(getApplicationContext(), getString(R.string.mailbox_alias_creation_paid), Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(getApplicationContext(), getString(R.string.mailbox_alias_creation_failed), Toast.LENGTH_LONG).show();
-                }
-                progressDialog.cancel();
-                onBackPressed();
+        mailboxesModel.createMailboxResponseStatus().observe(this, responseStatus -> {
+            if (responseStatus == ResponseStatus.RESPONSE_COMPLETE) {
+                Toast.makeText(getApplicationContext(), getString(R.string.mailbox_alias_creation_success), Toast.LENGTH_LONG).show();
+            } else if (responseStatus == ResponseStatus.RESPONSE_ERROR_PAID) {
+                Toast.makeText(getApplicationContext(), getString(R.string.mailbox_alias_creation_paid), Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getApplicationContext(), getString(R.string.mailbox_alias_creation_failed), Toast.LENGTH_LONG).show();
             }
+            progressDialog.cancel();
+            onBackPressed();
         });
 
         addListeners();
@@ -159,7 +144,7 @@ public class AddMailboxActivity extends BaseActivity {
 
     private void checkEmailAddress() {
         String domain = domainSpinner.getSelectedItem().toString();
-        String username = emailEditText.getText().toString();
+        String username = EditTextUtils.getText(emailEditText);
         if (username.isEmpty()) {
             return;
         }
@@ -167,7 +152,7 @@ public class AddMailboxActivity extends BaseActivity {
             emailEditText.setError(getString(R.string.error_username_small_two));
             return;
         }
-        if (!EditTextUtils.isTextValid(username.toString())) {
+        if (!EditTextUtils.isTextValid(username)) {
             emailEditText.setError(getString(R.string.error_username_incorrect));
             return;
         }

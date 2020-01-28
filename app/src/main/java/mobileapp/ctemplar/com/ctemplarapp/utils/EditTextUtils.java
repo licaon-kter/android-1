@@ -1,7 +1,9 @@
 package mobileapp.ctemplar.com.ctemplarapp.utils;
 
+import android.text.Editable;
 import android.text.TextUtils;
 import android.util.Patterns;
+import android.widget.EditText;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,9 +34,14 @@ public class EditTextUtils {
     }
 
     public static boolean isTextValid(String text) {
-        Pattern pattern = Pattern.compile("^[a-zA-Z0-9-_ ]+$");
+        Pattern pattern = Pattern.compile("^[a-zA-Z0-9-_. ]+$");
         Matcher matcher = pattern.matcher(text);
         return matcher.matches();
+    }
+
+    public static String getText(EditText editText) {
+        Editable editable = editText.getText();
+        return editable == null ? "" : editable.toString();
     }
 
     public static boolean isTextLength(String text, int min, int max) {

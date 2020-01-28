@@ -1,12 +1,11 @@
 package mobileapp.ctemplar.com.ctemplarapp.login;
 
-import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.design.widget.TextInputEditText;
-import android.support.design.widget.TextInputLayout;
+import androidx.annotation.Nullable;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -14,9 +13,9 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
+
+import org.jetbrains.annotations.NotNull;
 
 import butterknife.BindInt;
 import butterknife.BindView;
@@ -64,24 +63,18 @@ public class SignInFragment extends BaseFragment {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NotNull Context context) {
         super.onAttach(context);
     }
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         loginActivityModel = ViewModelProviders.of(getActivity()).get(LoginActivityViewModel.class);
-        loginActivityModel.getResponseStatus().observe(getActivity(), new Observer<ResponseStatus>() {
-
-            @Override
-            public void onChanged(@Nullable ResponseStatus status) {
-                handleStatus(status);
-            }
-        });
+        loginActivityModel.getResponseStatus().observe(getActivity(), this::handleStatus);
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NotNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         setListeners();
     }
@@ -103,12 +96,12 @@ public class SignInFragment extends BaseFragment {
         String otp = null;
 
         if (editTextUsername.getText() != null && editTextPassword.getText() != null) {
-            username = editTextUsername.getText().toString().trim()
+            username = EditTextUtils.getText(editTextUsername).trim().toLowerCase()
                     .replaceAll("@.+", "");
-            password = editTextPassword.getText().toString().trim();
+            password = EditTextUtils.getText(editTextPassword).trim();
         }
         if (editTextOtpCode.getText() != null && !editTextOtpCode.getText().toString().isEmpty()) {
-            otp = editTextOtpCode.getText().toString().trim();
+            otp = EditTextUtils.getText(editTextOtpCode).trim();
         }
         if(isValid(username, password)) {
             loginActivityModel.showProgressDialog();
@@ -188,22 +181,18 @@ public class SignInFragment extends BaseFragment {
         editTextPasswordLayout.setVisibility(View.GONE);
         textViewOtpTitle.setVisibility(View.VISIBLE);
         editTextOtpLayout.setVisibility(View.VISIBLE);
+        editTextOtpLayout.requestFocus();
     }
 
     private void sendFirebaseToken() {
-        loginActivityModel.getAddFirebaseTokenStatus().observe(this, new Observer<ResponseStatus>() {
-            @Override
-            public void onChanged(@Nullable ResponseStatus responseStatus) {
-                loginActivityModel.changeAction(LoginActivityActions.CHANGE_ACTIVITY_MAIN);
-            }
+        loginActivityModel.getAddFirebaseTokenStatus().observe(this, responseStatus -> {
+            loginActivityModel.clearDB();
+            loginActivityModel.changeAction(LoginActivityActions.CHANGE_ACTIVITY_MAIN);
         });
 
-        FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener(getActivity(), new OnSuccessListener<InstanceIdResult>() {
-            @Override
-            public void onSuccess(InstanceIdResult instanceIdResult) {
-                String token = instanceIdResult.getToken();
-                loginActivityModel.addFirebaseToken(token, "android");
-            }
+        FirebaseInstanceId.getInstance().getInstanceId().addOnSuccessListener(getActivity(), instanceIdResult -> {
+            String token = instanceIdResult.getToken();
+            loginActivityModel.addFirebaseToken(token, getString(R.string.platform));
         });
     }
 
